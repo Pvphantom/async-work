@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # 1. The Database (Postgres)
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: sentiment_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # 2. The Message Broker (Redis)
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  # 3. The API (FastAPI)
+  web:
+    build: .
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgresql://user:password@db/sentiment_db
+      REDIS_URL: redis://redis:6379/0
+
+  # 4. The Worker (Celery + AI)
+  worker:
+    build: .
+    # This command starts the Celery worker instead of the API
+    command: celery -A tasks.celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgresql://user:password@db/sentiment_db
+      REDIS_URL: redis://redis:6379/0
+
+volumes:
+  postgres_data:
