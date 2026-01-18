@@ -19,24 +19,24 @@ def analyze_sentiment_task(self, text_list, task_id_db):
     This function runs in the background worker.
     """
     db = SessionLocal()
-    # 1. Find the entry in Postgres and mark as PROCESSING
+    # Find the entry in Postgres and mark as PROCESSING
     record = db.query(AnalysisResult).filter(AnalysisResult.task_id == task_id_db).first()
     if record:
         record.status = "PROCESSING"
         db.commit()
 
     try:
-        # 2. Run the heavy AI computation
+        # Run the heavy AI computation
         results = sentiment_pipeline(text_list)
         
-        # 3. Update DB with success
+        # Update DB with success
         if record:
             record.status = "COMPLETED"
             record.result = results
             db.commit()
             
     except Exception as e:
-        # 4. Handle Failure
+        # Handle Failure
         if record:
             record.status = "FAILED"
             record.result = {"error": str(e)}

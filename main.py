@@ -16,16 +16,15 @@ class SentimentRequest(BaseModel):
 
 @app.post("/analyze")
 def start_analysis(request: SentimentRequest, db: Session = Depends(get_db)):
-    # 1. Generate a unique ID
+    # Generate a unique ID
     task_id = str(uuid.uuid4())
     
-    # 2. Create a "PENDING" record in Postgres
+    # Create a "PENDING" record in Postgres
     new_record = AnalysisResult(task_id=task_id, status="PENDING")
     db.add(new_record)
     db.commit()
     
-    # 3. Send the job to Celery (Redis)
-    # .delay() is the magic method that makes it async
+    # Send the job to Celery (Redis)
     analyze_sentiment_task.delay(request.texts, task_id)
     
     return {"task_id": task_id, "message": "Job submitted! Check status at /status/" + task_id}

@@ -14,7 +14,7 @@ class AnalysisResult(Base):
     __tablename__ = "results"
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(String, unique=True, index=True)
-    status = Column(String, default="PENDING") # PENDING, PROCESSING, COMPLETED, FAILED
+    status = Column(String, default="PENDING") 
     result = Column(JSON, nullable=True) # Stores the actual sentiment data
 
 # Helper to get DB session
